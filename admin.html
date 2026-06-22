@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League Administration - Football Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">⚽ <span>LeagueManager</span> Pro</a>
+            <nav class="nav-links">
+                <div
+                    style="display: flex; gap: 8px; margin-right: 15px; border-right: 1px solid var(--border); padding-right: 15px;">
+                    <button class="nav-btn" onclick="toggleTheme()" data-i18n="btn_theme_toggle">🌓 Theme</button>
+                    <button class="nav-btn lang-toggle" data-lang="en"
+                        onclick="window.dbEngine.setLanguage('en')">EN</button>
+                    <button class="nav-btn lang-toggle" data-lang="am"
+                        onclick="window.dbEngine.setLanguage('am')">አማ</button>
+                </div>
+                <a href="index.html" class="nav-btn" data-i18n="nav_user_portal">User Portal</a>
+                <a href="admin.html" class="nav-btn active admin-link" data-i18n="nav_admin_dashboard">Admin
+                    Dashboard</a>
+                <button onclick="window.dbEngine.logout()" class="nav-btn" data-i18n="nav_logout">Logout</button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <div class="dashboard-hero">
+            <div class="hero-content">
+                <h1 data-i18n="hero_title_admin">League <span>Admin Dashboard</span></h1>
+                <p data-i18n="hero_desc_admin">Manage football teams, recruit & adjust players, set match fixtures,
+                    record final scores, or kick off
+                    live game simulations.</p>
+                <div class="dashboard-hero-footer">
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard KPI Stats Bar -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🛡️</div>
+                <div class="stat-info">
+                    <h3 data-i18n="stat_total_teams">Total Teams</h3>
+                    <p id="stat-teams-count">0</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏃‍♂️</div>
+                <div class="stat-info">
+                    <h3 data-i18n="stat_registered_players">Registered Players</h3>
+                    <p id="stat-players-count">0</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-info">
+                    <h3 data-i18n="stat_matches_scheduled">Matches Scheduled</h3>
+                    <p id="stat-matches-count">0</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚽</div>
+                <div class="stat-info">
+                    <h3 data-i18n="stat_goals_recorded">Goals Recorded</h3>
+                    <p id="stat-goals-count">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Admin Category Filter Area -->
+        <div class="section-panel"
+            style="margin-bottom: 25px; border: 1px solid var(--primary); background: rgba(0, 255, 127, 0.03);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--primary);"
+                        data-i18n="label_category_isolation">Tournament Isolation Mode</h2>
+                    <p style="font-size: 0.8rem; color: var(--text-dark);">Select a category to filter all teams,
+                        players, and match sheets across the entire dashboard.</p>
+                </div>
+                <div class="global-category-tabs" id="admin-global-cat-selector">
+                    <button class="g-cat-btn active" onclick="setAdminGlobalCategory('all')"
+                        data-i18n="all">All</button>
+                    <button class="g-cat-btn" onclick="setAdminGlobalCategory('senior')"
+                        data-i18n="cat_senior">Seniors</button>
+                    <button class="g-cat-btn" onclick="setAdminGlobalCategory('u15')" data-i18n="cat_u15">U15</button>
+                    <button class="g-cat-btn" onclick="setAdminGlobalCategory('u13')" data-i18n="cat_u13">U13</button>
+                    <button class="g-cat-btn" onclick="setAdminGlobalCategory('u10')" data-i18n="cat_u10">U10</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Workspace Tabs -->
+        <div class="admin-tabs">
+            <button class="admin-tab-btn active" onclick="switchTab('teams-tab')" data-i18n="tab_manage_teams">🛡️
+                Manage Teams</button>
+            <button class="admin-tab-btn" onclick="switchTab('players-tab')" data-i18n="tab_manage_players">🏃‍♂️ Manage
+                Players</button>
+            <button class="admin-tab-btn" onclick="switchTab('matches-tab')" data-i18n="tab_manage_matches">📅 Manage
+                Matches</button>
+        </div>
+
+        <!-- TAB 1: TEAMS -->
+        <div id="teams-tab" class="admin-tab-panel active">
+            <div class="admin-section-grid">
+                <!-- Team Form Card -->
+                <div class="section-panel">
+                    <div class="panel-header">
+                        <h2 id="team-form-title" data-i18n="section_add_team">Add New Team</h2>
+                    </div>
+                    <form id="team-form" onsubmit="handleTeamSubmit(event)">
+                        <input type="hidden" id="team-edit-id">
+                        <div class="form-group">
+                            <label for="team-name" data-i18n="label_team_name">Team Name</label>
+                            <input type="text" id="team-name" class="form-control"
+                                data-i18n-placeholder="label_team_name" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="team-logo" data-i18n="label_logo_emoji">Logo Emoji</label>
+                                <input type="text" id="team-logo" class="form-control"
+                                    data-i18n-placeholder="label_logo_emoji" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="team-founded" data-i18n="label_year_founded">Year Founded</label>
+                                <input type="number" id="team-founded" class="form-control" placeholder="e.g. 1878"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="team-stadium" data-i18n="label_stadium">Home Stadium</label>
+                            <input type="text" id="team-stadium" class="form-control"
+                                data-i18n-placeholder="label_stadium" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="team-category" data-i18n="label_category">Tournament Category</label>
+                            <select id="team-category" class="form-control" required>
+                                <option value="senior" data-i18n="cat_senior">Seniors (Adults)</option>
+                                <option value="u10" data-i18n="cat_u10">Under 10 (U10)</option>
+                                <option value="u13" data-i18n="cat_u13">Under 13 (U13)</option>
+                                <option value="u15" data-i18n="cat_u15">Under 15 (U15)</option>
+                            </select>
+                        </div>
+                        <div class="form-row mt-4">
+                            <button type="button" class="btn btn-secondary" onclick="resetTeamForm()"
+                                data-i18n="btn_clear">Clear</button>
+                            <button type="submit" class="btn btn-primary" id="team-submit-btn"
+                                data-i18n="btn_add_team">Add Team</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Teams List Table -->
+                <div class="section-panel">
+                    <div class="panel-header">
+                        <h2 data-i18n="section_existing_clubs">Existing Football Clubs</h2>
+                        <button class="btn btn-secondary btn-sm" onclick="exportTeamsToCSV()"
+                            data-i18n="btn_export_excel" style="margin-bottom: 10px;">Export to Excel</button>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <select id="team-filter-cat" class="form-control btn-sm" onchange="renderTeamsTable()"
+                                style="margin: 0; min-width: 150px;">
+                                <option value="all">All Categories</option>
+                                <option value="senior">Seniors</option>
+                                <option value="u10">U10</option>
+                                <option value="u13">U13</option>
+                                <option value="u15">U15</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="league-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="table_club">Club</th>
+                                    <th data-i18n="table_founded">Founded</th>
+                                    <th data-i18n="table_stadium">Stadium</th>
+                                    <th style="text-align: right;" data-i18n="table_actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-teams-list">
+                                <!-- Dynamically Rendered -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: PLAYERS -->
+        <div id="players-tab" class="admin-tab-panel">
+            <div class="admin-section-grid">
+                <!-- Player Form Card -->
+                <div class="section-panel">
+                    <div class="panel-header">
+                        <h2 id="player-form-title" data-i18n="section_add_player">Register Player</h2>
+                    </div>
+                    <form id="player-form" onsubmit="handlePlayerSubmit(event)">
+                        <input type="hidden" id="player-edit-id">
+                        <div class="form-group">
+                            <label for="player-name" data-i18n="label_player_name">Full Name</label>
+                            <input type="text" id="player-name" class="form-control"
+                                data-i18n-placeholder="label_player_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="player-team">Assigned Club</label>
+                            <select id="player-team" class="form-control" required>
+                                <!-- Dynamically populated option lists -->
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="player-number">Jersey Number</label>
+                                <input type="number" id="player-number" class="form-control" placeholder="10" min="1"
+                                    max="99" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="player-position">Position</label>
+                                <select id="player-position" class="form-control" required>
+                                    <option value="GK">Goalkeeper (GK)</option>
+                                    <option value="DEF">Defender (DEF)</option>
+                                    <option value="MID">Midfielder (MID)</option>
+                                    <option value="FWD">Forward (FWD)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="player-age" data-i18n="label_age">Age</label>
+                                <input type="number" id="player-age" class="form-control" min="5" max="50">
+                            </div>
+                            <div class="form-group">
+                                <label for="player-nationality" data-i18n="label_nationality">Nationality</label>
+                                <input type="text" id="player-nationality" class="form-control"
+                                    data-i18n-placeholder="placeholder_nationality">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="player-status" data-i18n="label_player_status">Player Status</label>
+                                <select id="player-status" class="form-control" required>
+                                    <option value="active" data-i18n="status_active">Active</option>
+                                    <option value="injured" data-i18n="status_injured">Injured</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="player-yellow" data-i18n="label_yellow_cards">Yellow Cards</label>
+                                <input type="number" id="player-yellow" class="form-control" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="player-red" data-i18n="label_red_cards">Red Cards</label>
+                                <input type="number" id="player-red" class="form-control" min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="label_upload_photo">Upload Photo</label>
+                            <div class="upload-container" style="display: flex; gap: 1rem; align-items: center;">
+                                <div id="photo-preview-container"
+                                    style="width: 60px; height: 60px; border: 2px dashed var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--bg-dark);">
+                                    <span id="photo-preview-placeholder" style="font-size: 1.5rem;">👤</span>
+                                    <img id="photo-preview-img"
+                                        style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                                </div>
+                                <button type="button" class="btn btn-secondary btn-sm"
+                                    onclick="document.getElementById('player-photo-input').click()"
+                                    data-i18n="btn_upload">Choose Image</button>
+                                <input type="file" id="player-photo-input" style="display: none;" accept="image/*"
+                                    onchange="handlePhotoUpload(event)">
+                                <input type="hidden" id="player-photo">
+                            </div>
+                        </div>
+                        <div class="form-row" id="player-stats-row" style="display: none;">
+                            <div class="form-group">
+                                <label for="player-goals">Goals</label>
+                                <input type="number" id="player-goals" class="form-control" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="player-assists">Assists</label>
+                                <input type="number" id="player-assists" class="form-control" min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row mt-4">
+                            <button type="button" class="btn btn-secondary" onclick="resetPlayerForm()"
+                                data-i18n="btn_clear">Clear</button>
+                            <button type="submit" class="btn btn-primary" id="player-submit-btn"
+                                data-i18n="btn_add_player">Add Player</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Players Table Roster -->
+                <div class="section-panel">
+                    <div class="panel-header">
+                        <h2 data-i18n="squad_roster_title">Squad Roster & Player Sheets</h2>
+                        <div class="search-container">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="player-search" class="form-control btn-sm"
+                                data-i18n-placeholder="label_search_players" oninput="renderPlayersTable()">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <select id="player-filter-cat" class="form-control btn-sm" onchange="renderPlayersTable()"
+                                style="margin: 0; min-width: 130px;">
+                                <option value="all">All Categories</option>
+                                <option value="senior">Seniors</option>
+                                <option value="u10">U10</option>
+                                <option value="u13">U13</option>
+                                <option value="u15">U15</option>
+                            </select>
+                            <select id="player-filter-team" class="form-control btn-sm" onchange="renderPlayersTable()"
+                                style="margin: 0; min-width: 150px;">
+                                <option value="all">All Clubs</option>
+                            </select>
+                            <button class="btn btn-secondary btn-sm" onclick="exportPlayersToCSV()"
+                                data-i18n="btn_export_excel">CSV</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="league-table">
+                            <thead>
+                                <tr>
+                                    <th>Photo</th>
+                                    <th>Jersey</th>
+                                    <th>Name</th>
+                                    <th>Club</th>
+                                    <th data-i18n="label_age">Age</th>
+                                    <th data-i18n="label_nationality">Nat</th>
+                                    <th>Pos</th>
+                                    <th class="sortable" onclick="setPlayerSort('goals')">Goals</th>
+                                    <th class="sortable" onclick="setPlayerSort('assists')">Assists</th>
+                                    <th>Cards</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-players-list">
+                                <!-- Dynamically Rendered -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: MATCHES -->
+        <div id="matches-tab" class="admin-tab-panel">
+            <div class="admin-section-grid">
+                <div class="section-panel" style="background: linear-gradient(135deg, var(--bg-surface-elevated), var(--bg-surface)); border: 1px solid var(--primary-glow);">
+                    <div class="panel-header">
+                        <h2 style="color: var(--primary);"><span style="font-size: 1.25rem;">⚡</span> Match Season Generator</h2>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+                        Automatically pair all clubs in the current category for a full Home/Away season.
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div class="form-group">
+                            <label style="font-size: 0.8rem;">Target Category</label>
+                            <input type="text" id="auto-gen-cat-display" class="form-control btn-sm" readonly style="background: var(--bg-dark);">
+                        </div>
+                        <button class="btn btn-primary btn-full" onclick="handleAutoGenerate()" style="background: linear-gradient(90deg, var(--primary), var(--secondary)); border: none; font-weight: 700;">
+                            ✨ Auto-Generate Full Season
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="handleClearMatches()" style="margin-top: 0.5rem; opacity: 0.8;">
+                            🗑️ Clear Current Schedule
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Match Form Card -->
+                <div class="section-panel">
+                    <div class="panel-header">
+                        <h2 data-i18n="fixtures_title">Manual Schedule</h2>
+                    </div>
+                    <form id="match-form" onsubmit="handleMatchSubmit(event)">
+                        <div class="form-group">
+                            <label for="match-home">Home Team</label>
+                            <select id="match-home" class="form-control" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="match-away">Away Team</label>
+                            <select id="match-away" class="form-control" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="match-date">Match Date</label>
+                            <input type="date" id="match-date" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full mt-4">Create Manual Schedule</button>
+                    </form>
+                </div>
+
+                <!-- Matches Panel -->
+                <div class="section-panel">
+                    <div class="panel-header">
+                        <h2 data-i18n="fixtures_title">Fixtures & Live Match Ticker</h2>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <select id="match-filter-cat" class="form-control btn-sm" onchange="renderMatchesList()"
+                                style="margin: 0; min-width: 150px;">
+                                <option value="all">All Categories</option>
+                                <option value="senior">Seniors</option>
+                                <option value="u10">U10</option>
+                                <option value="u13">U13</option>
+                                <option value="u15">U15</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="fixtures-list" id="admin-matches-list">
+                        <!-- Dynamically Rendered Match Cards -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Score Editing / Simulation Modal Overlay -->
+    <div class="modal-overlay" id="score-modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 data-i18n="modal_record_title">Record/Simulate Score</h3>
+                <button class="modal-close" onclick="closeScoreModal()">&times;</button>
+            </div>
+
+            <!-- Standard score override form -->
+            <form id="score-form" onsubmit="handleScoreSubmit(event)">
+                <input type="hidden" id="modal-match-id">
+
+                <div class="match-board mb-4">
+                    <div class="team-display home">
+                        <span class="team-name-inline" id="modal-home-name">Team A</span>
+                    </div>
+                    <div>
+                        <div class="form-row" style="max-width: 120px; margin: 0 auto;">
+                            <input type="number" id="modal-home-score" class="form-control text-center" min="0"
+                                value="0" required>
+                            <input type="number" id="modal-away-score" class="form-control text-center" min="0"
+                                value="0" required>
+                        </div>
+                    </div>
+                    <div class="team-display away">
+                        <span class="team-name-inline" id="modal-away-name">Team B</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-match-status">Match Status</label>
+                    <select id="modal-match-status" class="form-control">
+                        <option value="scheduled">Scheduled</option>
+                        <option value="finished">Finished (Saves Score)</option>
+                    </select>
+                </div>
+
+                <div class="form-row mt-4">
+                    <button type="button" class="btn btn-danger btn-sm" id="modal-sim-btn"
+                        onclick="triggerSimulation()">Simulate Match Live ⚡</button>
+                    <button type="submit" class="btn btn-primary">Save Score</button>
+                </div>
+
+                <!-- Mini Simulation Progress Container -->
+                <div id="sim-progress-box"
+                    style="display:none; margin-top:20px; border-top:1px solid var(--border); padding-top:15px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span style="font-weight:bold; color:var(--primary);">Simulation Progress</span>
+                        <span id="sim-time"
+                            style="font-family:monospace; background:var(--bg-dark); padding:2px 8px; border-radius:10px; border:1px solid var(--border);">0'</span>
+                    </div>
+                    <div
+                        style="font-size: 1.6rem; text-align: center; font-weight:800; font-family:var(--font-heading); margin: 15px 0;">
+                        <span id="sim-score-home">0</span> - <span id="sim-score-away">0</span>
+                    </div>
+                    <div style="background:var(--bg-dark); padding:10px; border-radius:10px; max-height:120px; overflow-y:auto; font-size:0.85rem;"
+                        id="sim-log">
+                        <!-- Simulation feedback updates -->
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Match Report Modal -->
+    <div class="modal-overlay report-modal" id="report-modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 data-i18n="label_match_report">Match Events Report</h3>
+                <button class="modal-close" onclick="closeReportModal()">&times;</button>
+            </div>
+            <div class="timeline-list" id="report-timeline-list">
+                <!-- Events log -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Logic Connection -->
+    <script src="app.js"></script>
+    <script>
+        // Route protection
+        window.dbEngine.requireAuth();
+
+        // Tab switching controller
+        function switchTab(tabId) {
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.admin-tab-panel').forEach(panel => panel.classList.remove('active'));
+
+            const targetBtn = Array.from(document.querySelectorAll('.admin-tab-btn')).find(btn => btn.textContent.toLowerCase().includes(tabId.split('-')[0]));
+            if (targetBtn) targetBtn.classList.add('active');
+
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // --- RENDER DYNAMICS ---
+        function renderMetrics() {
+            let teams = window.dbEngine.getTeams();
+            let players = window.dbEngine.getPlayers();
+            let matches = window.dbEngine.getMatches();
+
+            if (currentAdminCategory !== 'all') {
+                teams = teams.filter(t => t.category === currentAdminCategory);
+                const teamIds = teams.map(t => t.id);
+                players = players.filter(p => teamIds.includes(p.teamId));
+                matches = matches.filter(m => {
+                    const home = window.dbEngine.getTeamById(m.homeTeamId);
+                    return home && home.category === currentAdminCategory;
+                });
+            }
+
+            document.getElementById('stat-teams-count').textContent = teams.length;
+            document.getElementById('stat-players-count').textContent = players.length;
+            document.getElementById('stat-matches-count').textContent = matches.length;
+
+            const goalsTotal = matches.reduce((acc, m) => acc + (m.status === 'finished' ? (m.homeScore + m.awayScore) : 0), 0);
+            document.getElementById('stat-goals-count').textContent = goalsTotal;
+        }
+
+        // --- CATEGORY ISOLATION CONTROLLER ---
+        let currentAdminCategory = 'all';
+
+        function setAdminGlobalCategory(cat) {
+            currentAdminCategory = cat;
+
+            // Update UI buttons
+            document.querySelectorAll('#admin-global-cat-selector .g-cat-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${cat}'`));
+            });
+
+            // Sync sub-filters if they exist
+            if (document.getElementById('team-filter-cat')) document.getElementById('team-filter-cat').value = cat;
+            if (document.getElementById('player-filter-cat')) document.getElementById('player-filter-cat').value = cat;
+            if (document.getElementById('match-filter-cat')) document.getElementById('match-filter-cat').value = cat;
+
+            // Update Add Team form default
+            if (cat !== 'all') {
+                document.getElementById('team-category').value = cat;
+                document.getElementById('auto-gen-cat-display').value = cat.toUpperCase();
+            } else {
+                document.getElementById('auto-gen-cat-display').value = "ALL (Please select a category)";
+            }
+
+            refreshAll();
+        }
+
+        function handleAutoGenerate() {
+            if (currentAdminCategory === 'all') {
+                alert("Please select a specific category (e.g., Seniors, U15) to generate a schedule.");
+                return;
+            }
+            if (confirm(`Generate a full Home/Away schedule for all teams in ${currentAdminCategory.toUpperCase()}? This will add to existing matches.`)) {
+                const result = window.dbEngine.autoGenerateSchedule(currentAdminCategory);
+                if (result.success) {
+                    alert(`Successfully generated ${result.count} matches!`);
+                    refreshAll();
+                } else {
+                    alert(result.message);
+                }
+            }
+        }
+
+        function handleClearMatches() {
+            if (currentAdminCategory === 'all') {
+                if (confirm("Delete ALL matches in ALL categories?")) {
+                    window.dbEngine.clearMatches('all');
+                    refreshAll();
+                }
+            } else {
+                if (confirm(`Delete all matches in ${currentAdminCategory.toUpperCase()} category?`)) {
+                    window.dbEngine.clearMatches(currentAdminCategory);
+                    refreshAll();
+                }
+            }
+        }
+
+        function populateFormDropdowns() {
+            let teams = window.dbEngine.getTeams();
+
+            // Apply isolation
+            if (currentAdminCategory !== 'all') {
+                teams = teams.filter(t => t.category === currentAdminCategory);
+            }
+
+            // Player Form Assign drop
+            const pTeamSelect = document.getElementById('player-team');
+            pTeamSelect.innerHTML = teams.map(t => `<option value="${t.id}">${t.logo} ${t.name}</option>`).join('');
+
+            // Player lists Filter dropdown
+            const filterTeam = document.getElementById('player-filter-team');
+            filterTeam.innerHTML = '<option value="all">All Clubs</option>' + teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+
+            // Scheduling Match forms
+            const matchHome = document.getElementById('match-home');
+            const matchAway = document.getElementById('match-away');
+            const teamOptions = teams.map(t => `<option value="${t.id}">${t.logo} ${t.name}</option>`).join('');
+            matchHome.innerHTML = teamOptions;
+            matchAway.innerHTML = teamOptions;
+        }
+
+        // Teams Render list
+        function renderTeamsTable() {
+            let teams = window.dbEngine.getTeams();
+            const container = document.getElementById('admin-teams-list');
+
+            // Respect global isolation first
+            if (currentAdminCategory !== 'all') {
+                teams = teams.filter(t => t.category === currentAdminCategory);
+            } else {
+                // If global is 'all', check local filter if anyone touches it
+                const filterCat = document.getElementById('team-filter-cat').value;
+                if (filterCat !== 'all') {
+                    teams = teams.filter(t => t.category === filterCat);
+                }
+            }
+
+            if (teams.length === 0) {
+                container.innerHTML = '<tr><td colspan="4" class="text-center font-bold pb-4 pt-4">No clubs found. Create one.</td></tr>';
+                return;
+            }
+
+            container.innerHTML = teams.map(t => `
+                <tr>
+                    <td>
+                        <div class="team-cell">
+                            <span class="team-logo-small">${t.logo}</span>
+                            <span>${t.name}</span>
+                        </div>
+                    </td>
+                    <td>${t.founded}</td>
+                    <td>${t.stadium}</td>
+                    <td><span class="player-pos-badge" style="background:var(--bg-surface-elevated)">${t.category.toUpperCase()}</span></td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-secondary btn-sm" onclick="editTeam('${t.id}')">Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteTeam('${t.id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Players Render list
+        let playerSortField = 'goals';
+        let playerSortOrder = 'desc';
+
+        function setPlayerSort(field) {
+            if (playerSortField === field) {
+                playerSortOrder = playerSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                playerSortField = field;
+                playerSortOrder = 'desc';
+            }
+            renderPlayersTable();
+        }
+
+        function renderPlayersTable() {
+            const filterTeam = document.getElementById('player-filter-team').value;
+            const searchQuery = document.getElementById('player-search').value.toLowerCase().trim();
+            let players = window.dbEngine.getPlayers();
+            const container = document.getElementById('admin-players-list');
+
+            // --- SORTING HEADERS UI ---
+            document.querySelectorAll('.sortable').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                if (th.getAttribute('onclick').includes(`'${playerSortField}'`)) {
+                    th.classList.add(playerSortOrder === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+
+            if (filterTeam !== 'all') {
+                players = players.filter(p => p.teamId === filterTeam);
+            }
+
+            // Search filter
+            if (searchQuery) {
+                players = players.filter(p => p.name.toLowerCase().includes(searchQuery));
+            }
+
+            // Respect global isolation
+            if (currentAdminCategory !== 'all') {
+                players = players.filter(p => {
+                    const team = window.dbEngine.getTeamById(p.teamId);
+                    return team && team.category === currentAdminCategory;
+                });
+            } else {
+                const filterCat = document.getElementById('player-filter-cat').value;
+                if (filterCat !== 'all') {
+                    players = players.filter(p => {
+                        const team = window.dbEngine.getTeamById(p.teamId);
+                        return team && team.category === filterCat;
+                    });
+                }
+            }
+
+            // Sort
+            players.sort((a, b) => {
+                const valA = a[playerSortField] || 0;
+                const valB = b[playerSortField] || 0;
+                if (playerSortOrder === 'asc') return valA - valB;
+                return valB - valA;
+            });
+
+            if (players.length === 0) {
+                container.innerHTML = '<tr><td colspan="10" class="text-center font-bold pb-4 pt-4">No players matching criteria.</td></tr>';
+                return;
+            }
+
+            container.innerHTML = players.map(p => {
+                const team = window.dbEngine.getTeamById(p.teamId);
+                const photo = p.photoUrl ? `<img src="${p.photoUrl}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;">` : `<div class="team-logo-small" style="font-size:0.8rem">${p.name.charAt(0)}</div>`;
+                const statusLabel = window.dbEngine.getTranslation('status_' + (p.status || 'active'));
+                const statusClass = 'status-' + (p.status || 'active');
+
+                return `
+                    <tr>
+                        <td>${photo}</td>
+                        <td><span class="rank-badge">${p.number}</span></td>
+                        <td style="font-weight:600;">
+                            ${p.name}
+                            <div style="margin-top:4px;"><span class="status-badge ${statusClass}">${statusLabel}</span></div>
+                        </td>
+                        <td>${team ? team.name : 'Unassigned'}</td>
+                        <td>${p.age || '-'}</td>
+                        <td>${p.nationality || '-'}</td>
+                        <td><span class="player-pos-badge player-role-${p.position}">${p.position}</span></td>
+                        <td class="highlight-col">${p.goals}</td>
+                        <td>${p.assists}</td>
+                        <td>
+                            <div style="display:flex; gap:8px; font-size:0.8rem;">
+                                <span>🟨 ${p.yellowCards || 0}</span>
+                                <span>🟥 ${p.redCards || 0}</span>
+                            </div>
+                        </td>
+                        <td style="text-align: right;">
+                            <button class="btn btn-secondary btn-sm" onclick="editPlayer('${p.id}')">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deletePlayer('${p.id}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Matches Render list
+        function renderMatchesList() {
+            let activeFilter = currentAdminCategory;
+            if (activeFilter === 'all') {
+                activeFilter = document.getElementById('match-filter-cat').value;
+            }
+            const matches = window.dbEngine.getMatches(activeFilter);
+            const container = document.getElementById('admin-matches-list');
+
+            if (matches.length === 0) {
+                container.innerHTML = '<div class="empty-placeholder"><span>📅</span>No fixtures scheduled. Set match sheets!</div>';
+                return;
+            }
+
+            // Order matches showing scheduled and live first, finished last
+            const sortedMatches = [...matches].sort((a, b) => {
+                if (a.status === 'live') return -1;
+                if (b.status === 'live') return 1;
+                if (a.status === 'scheduled' && b.status === 'finished') return -1;
+                if (a.status === 'finished' && b.status === 'scheduled') return 1;
+                return new Date(b.date) - new Date(a.date);
+            });
+
+            container.innerHTML = sortedMatches.map(m => {
+                const home = window.dbEngine.getTeamById(m.homeTeamId);
+                const away = window.dbEngine.getTeamById(m.awayTeamId);
+                if (!home || !away) return '';
+
+                let badgeClass = 'status-scheduled';
+                let scoreText = 'vs';
+                let isLive = m.status === 'live';
+                let timelineBtn = '';
+
+                if (m.status === 'finished') {
+                    badgeClass = 'status-finished';
+                    scoreText = `${m.homeScore} - ${m.awayScore}`;
+                    timelineBtn = `<button class="btn btn-secondary btn-sm" onclick="openReportModal('${m.id}')" data-i18n="btn_view_timeline">View Timeline</button>`;
+                } else if (isLive) {
+                    badgeClass = 'status-live';
+                    scoreText = `${m.homeScore} - ${m.awayScore}`;
+                }
+
+                return `
+                    <div class="match-card">
+                        <div class="match-meta">
+                            <span>📅 ${m.date}</span>
+                            <span class="match-status-badge ${badgeClass}">
+                                ${isLive ? '🔴 LIVE ' + m.minute + "'" : m.status}
+                            </span>
+                        </div>
+                        <div class="match-board">
+                            <div class="team-display home">
+                                <span class="team-name-inline">${home.name}</span>
+                                <span class="team-logo-small">${home.logo}</span>
+                            </div>
+                            <div>
+                                <div class="score-display-box ${isLive ? 'live' : ''}">${scoreText}</div>
+                            </div>
+                            <div class="team-display away">
+                                <span class="team-logo-small">${away.logo}</span>
+                                <span class="team-name-inline">${away.name}</span>
+                            </div>
+                        </div>
+                        <div class="form-row mt-4">
+                            ${timelineBtn}
+                            <button class="btn btn-secondary btn-sm" onclick="openScoreModal('${m.id}')" ${isLive ? 'disabled' : ''}>
+                                ${m.status === 'finished' ? 'Edit Score' : 'Record Score / Simulate ⚡'}
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteMatch('${m.id}')" ${isLive ? 'disabled' : ''}>Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- SUBMISSIONS CRUD ---
+
+        // Team Submissions
+        function handleTeamSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('team-edit-id').value;
+            const name = document.getElementById('team-name').value.trim();
+            const logo = document.getElementById('team-logo').value.trim();
+            const founded = document.getElementById('team-founded').value;
+            const stadium = document.getElementById('team-stadium').value.trim();
+            const category = document.getElementById('team-category').value;
+
+            if (id) {
+                window.dbEngine.updateTeam(id, name, logo, founded, stadium, category);
+            } else {
+                window.dbEngine.addTeam(name, logo, founded, stadium, category);
+            }
+
+            resetTeamForm();
+            refreshAll();
+        }
+
+        function editTeam(id) {
+            const team = window.dbEngine.getTeamById(id);
+            if (!team) return;
+
+            document.getElementById('team-edit-id').value = team.id;
+            document.getElementById('team-name').value = team.name;
+            document.getElementById('team-logo').value = team.logo;
+            document.getElementById('team-founded').value = team.founded;
+            document.getElementById('team-stadium').value = team.stadium;
+            document.getElementById('team-category').value = team.category || 'senior';
+
+            document.getElementById('team-form-title').textContent = "Update Club Info";
+            document.getElementById('team-submit-btn').textContent = "Save Changes";
+        }
+
+        function deleteTeam(id) {
+            if (confirm("Are you sure? Deleting this club will delete all its players and past fixtures data.")) {
+                window.dbEngine.deleteTeam(id);
+                refreshAll();
+            }
+        }
+
+        function resetTeamForm() {
+            document.getElementById('team-edit-id').value = "";
+            document.getElementById('team-form').reset();
+            document.getElementById('team-form-title').textContent = "Add New Team";
+            document.getElementById('team-submit-btn').textContent = "Add Team";
+        }
+
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const base64 = e.target.result;
+                document.getElementById('player-photo').value = base64;
+
+                const previewImg = document.getElementById('photo-preview-img');
+                const placeholder = document.getElementById('photo-preview-placeholder');
+
+                previewImg.src = base64;
+                previewImg.style.display = 'block';
+                placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Player Submissions
+        function handlePlayerSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('player-edit-id').value;
+            const name = document.getElementById('player-name').value.trim();
+            const teamId = document.getElementById('player-team').value;
+            const number = document.getElementById('player-number').value;
+            const position = document.getElementById('player-position').value;
+
+            const photoUrl = document.getElementById('player-photo').value;
+            const age = document.getElementById('player-age').value;
+            const nationality = document.getElementById('player-nationality').value.trim();
+            const status = document.getElementById('player-status').value;
+            const yellowCards = document.getElementById('player-yellow').value;
+            const redCards = document.getElementById('player-red').value;
+
+            if (id) {
+                const goals = document.getElementById('player-goals').value;
+                const assists = document.getElementById('player-assists').value;
+                window.dbEngine.updatePlayer(id, name, number, position, goals, assists, photoUrl, age, nationality, status, yellowCards, redCards);
+            } else {
+                window.dbEngine.addPlayer(teamId, name, number, position, photoUrl, age, nationality, status, yellowCards, redCards);
+            }
+
+            resetPlayerForm();
+            refreshAll();
+        }
+
+        function editPlayer(id) {
+            const p = window.dbEngine.getPlayerById(id);
+            if (!p) return;
+
+            document.getElementById('player-edit-id').value = p.id;
+            document.getElementById('player-name').value = p.name;
+            document.getElementById('player-team').value = p.teamId;
+            document.getElementById('player-team').disabled = true; // Block reassignment directly in edit to prevent mismatch
+            document.getElementById('player-number').value = p.number;
+            document.getElementById('player-position').value = p.position;
+            document.getElementById('player-photo').value = p.photoUrl || '';
+
+            if (p.photoUrl) {
+                document.getElementById('photo-preview-img').src = p.photoUrl;
+                document.getElementById('photo-preview-img').style.display = 'block';
+                document.getElementById('photo-preview-placeholder').style.display = 'none';
+            }
+
+            document.getElementById('player-age').value = p.age || '';
+            document.getElementById('player-nationality').value = p.nationality || '';
+            document.getElementById('player-status').value = p.status || 'active';
+            document.getElementById('player-yellow').value = p.yellowCards || 0;
+            document.getElementById('player-red').value = p.redCards || 0;
+
+            document.getElementById('player-goals').value = p.goals;
+            document.getElementById('player-assists').value = p.assists;
+            document.getElementById('player-stats-row').style.display = 'grid';
+
+            document.getElementById('player-form-title').textContent = "Edit Player Record";
+            document.getElementById('player-submit-btn').textContent = "Update Player";
+        }
+
+        function deletePlayer(id) {
+            if (confirm("Are you sure you want to release this player?")) {
+                window.dbEngine.deletePlayer(id);
+                refreshAll();
+            }
+        }
+
+        function resetPlayerForm() {
+            document.getElementById('player-edit-id').value = "";
+            document.getElementById('player-team').disabled = false;
+            document.getElementById('player-form').reset();
+            document.getElementById('player-photo').value = '';
+            document.getElementById('photo-preview-img').src = '';
+            document.getElementById('photo-preview-img').style.display = 'none';
+            document.getElementById('photo-preview-placeholder').style.display = 'block';
+            document.getElementById('player-age').value = '';
+            document.getElementById('player-nationality').value = '';
+            document.getElementById('player-yellow').value = 0;
+            document.getElementById('player-red').value = 0;
+            document.getElementById('player-stats-row').style.display = 'none';
+            document.getElementById('player-form-title').textContent = "Register Player";
+            document.getElementById('player-submit-btn').textContent = "Add Player";
+        }
+
+
+        // Match Submissions
+        function handleMatchSubmit(e) {
+            e.preventDefault();
+            const homeId = document.getElementById('match-home').value;
+            const awayId = document.getElementById('match-away').value;
+            const date = document.getElementById('match-date').value;
+
+            if (homeId === awayId) {
+                alert("A club cannot play against itself. Choose separate clubs.");
+                return;
+            }
+
+            window.dbEngine.scheduleMatch(homeId, awayId, date);
+            document.getElementById('match-form').reset();
+            refreshAll();
+        }
+
+        function deleteMatch(id) {
+            if (confirm("Remove this match fixture from schedule sheets?")) {
+                window.dbEngine.deleteMatch(id);
+                refreshAll();
+            }
+        }
+
+
+        // --- MODAL CONTROLLER & LIVE SIMULATOR FOR ADMIN ---
+        let activeSimInterval = null;
+
+        function openScoreModal(matchId) {
+            const m = window.dbEngine.getMatchById(matchId);
+            if (!m) return;
+
+            const home = window.dbEngine.getTeamById(m.homeTeamId);
+            const away = window.dbEngine.getTeamById(m.awayTeamId);
+
+            document.getElementById('modal-match-id').value = m.id;
+            document.getElementById('modal-home-name').textContent = home.name;
+            document.getElementById('modal-away-name').textContent = away.name;
+            document.getElementById('modal-home-score').value = m.homeScore;
+            document.getElementById('modal-away-score').value = m.awayScore;
+            document.getElementById('modal-match-status').value = m.status;
+
+            // Reset simulation panel
+            document.getElementById('sim-progress-box').style.display = 'none';
+            document.getElementById('modal-sim-btn').style.display = m.status === 'scheduled' ? 'inline-flex' : 'none';
+
+            document.getElementById('score-modal-overlay').classList.add('active');
+        }
+
+        function closeScoreModal() {
+            if (activeSimInterval) {
+                clearInterval(activeSimInterval);
+                activeSimInterval = null;
+            }
+            document.getElementById('score-modal-overlay').classList.remove('active');
+            refreshAll();
+        }
+
+        function handleScoreSubmit(e) {
+            e.preventDefault();
+            const matchId = document.getElementById('modal-match-id').value;
+            const hScore = document.getElementById('modal-home-score').value;
+            const aScore = document.getElementById('modal-away-score').value;
+            const status = document.getElementById('modal-match-status').value;
+
+            window.dbEngine.updateMatch(matchId, hScore, aScore, status);
+            closeScoreModal();
+        }
+
+        function triggerSimulation() {
+            const matchId = document.getElementById('modal-match-id').value;
+
+            // Show Live progress box, disable control overrides
+            document.getElementById('sim-progress-box').style.display = 'block';
+            document.getElementById('modal-sim-btn').disabled = true;
+            document.getElementById('modal-match-status').disabled = true;
+
+            const simTime = document.getElementById('sim-time');
+            const scoreHome = document.getElementById('sim-score-home');
+            const scoreAway = document.getElementById('sim-score-away');
+            const simLog = document.getElementById('sim-log');
+
+            simLog.innerHTML = `<p style="color:var(--text-muted);">Simulator preparing pitch...</p>`;
+
+            // Trigger simulator
+            activeSimInterval = window.dbEngine.simulateMatch(
+                matchId,
+                (liveMatch) => {
+                    // Tick Callback
+                    simTime.textContent = liveMatch.minute + "'";
+                    scoreHome.textContent = liveMatch.homeScore;
+                    scoreAway.textContent = liveMatch.awayScore;
+
+                    // Show events logs
+                    simLog.innerHTML = liveMatch.events.map(ev =>
+                        `<div style="margin-bottom:6px; line-height:1.3;">
+                            <span style="color:var(--primary); font-family:monospace;">${ev.time}'</span> ${ev.icon} ${ev.text}
+                         </div>`
+                    ).reverse().join('');
+                    simLog.scrollTop = 0;
+                },
+                (finalMatch) => {
+                    // Complete Callback
+                    clearInterval(activeSimInterval);
+                    activeSimInterval = null;
+                    document.getElementById('modal-home-score').value = finalMatch.homeScore;
+                    document.getElementById('modal-away-score').value = finalMatch.awayScore;
+                    document.getElementById('modal-match-status').value = 'finished';
+
+                    // Save the final match record with events
+                    window.dbEngine.updateMatch(matchId, finalMatch.homeScore, finalMatch.awayScore, 'finished', 90, finalMatch.events);
+
+                    document.getElementById('modal-match-status').disabled = false;
+                    document.getElementById('modal-sim-btn').style.display = 'none';
+
+                    alert("Match Simulation Complete! Final score saved to records.");
+                }
+            );
+        }
+
+
+        // --- DATABASE BACKUP & RESTORE ---
+        function exportDatabase() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.dbEngine.state, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "football_manager_backup_" + new Date().toISOString().split('T')[0] + ".json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function importDatabase(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const confirmMsg = window.dbEngine.getTranslation('confirm_import');
+            if (!confirm(confirmMsg)) {
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    // Minimal validation
+                    if (!importedData.teams || !importedData.players || !importedData.matches) {
+                        throw new Error("Invalid backup format. Missing core datasets.");
+                    }
+
+                    window.dbEngine.state = importedData;
+                    window.dbEngine.save();
+                    alert("Database imported successfully! Application will now reload.");
+                    window.location.reload();
+                } catch (err) {
+                    alert("Import Error: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportPlayersToCSV() {
+            const players = window.dbEngine.getPlayers();
+            if (players.length === 0) {
+                alert("No players to export.");
+                return;
+            }
+
+            // Define CSV Header
+            let csvContent = "Name,Jersey,Team,Position,Age,Nationality,Status,Goals,Assists\n";
+
+            // Add rows
+            players.forEach(p => {
+                const team = window.dbEngine.getTeamById(p.teamId);
+                const teamName = team ? team.name : 'Unassigned';
+                const row = [
+                    p.name,
+                    p.number,
+                    teamName,
+                    p.position,
+                    p.age || '-',
+                    p.nationality || '-',
+                    p.status || 'active',
+                    p.goals,
+                    p.assists
+                ].join(",");
+                csvContent += row + "\n";
+            });
+
+            // Trigger download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "players_report_" + new Date().toISOString().split('T')[0] + ".csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportTeamsToCSV() {
+            const teams = window.dbEngine.getTeams();
+            if (teams.length === 0) {
+                alert("No teams to export.");
+                return;
+            }
+
+            let csvContent = "Name,Logo,Founded,Stadium,Category\n";
+            teams.forEach(t => {
+                const row = [
+                    t.name,
+                    t.logo,
+                    t.founded,
+                    t.stadium,
+                    t.category
+                ].join(",");
+                csvContent += row + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "teams_report_" + new Date().toISOString().split('T')[0] + ".csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function toggleTheme() {
+            const current = window.dbEngine.getTheme();
+            const next = current === 'dark' ? 'light' : 'dark';
+            window.dbEngine.setTheme(next);
+            applyTheme();
+        }
+
+        function applyTheme() {
+            const theme = window.dbEngine.getTheme();
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-mode');
+            } else {
+                document.documentElement.classList.remove('light-mode');
+            }
+        }
+
+        function openReportModal(matchId) {
+            const m = window.dbEngine.getMatchById(matchId);
+            if (!m || !m.events) return;
+
+            const list = document.getElementById('report-timeline-list');
+            list.innerHTML = m.events.length ? m.events.map(ev => `
+                <div class="timeline-item">
+                    <span class="timeline-time">${ev.time}'</span>
+                    <span>${ev.icon} ${ev.text}</span>
+                </div>
+            `).reverse().join('') : '<p class="text-center">No events logged for this match.</p>';
+
+            document.getElementById('report-modal-overlay').classList.add('active');
+        }
+
+        function closeReportModal() {
+            document.getElementById('report-modal-overlay').classList.remove('active');
+        }
+
+        // --- GLOBAL REFRESH ---
+        function refreshAll() {
+            renderMetrics();
+            populateFormDropdowns();
+            renderTeamsTable();
+            renderPlayersTable();
+            renderMatchesList();
+        }
+
+        // Set default calendar date to today
+        document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
+
+        // Init
+        window.addEventListener('DOMContentLoaded', () => {
+            applyTheme();
+            refreshAll();
+        });
+    </script>
+</body>
+
+</html>
