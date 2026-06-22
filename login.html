@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Football Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .login-wrapper {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 450px;
+            padding: 3rem;
+            animation: slide-up 0.5s ease-out;
+        }
+
+        @keyframes slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">⚽ <span>LeagueManager</span> Pro</a>
+            <div style="display: flex; gap: 10px;">
+                <button class="nav-btn lang-toggle" data-lang="en"
+                    onclick="window.dbEngine.setLanguage('en')">EN</button>
+                <button class="nav-btn lang-toggle" data-lang="am"
+                    onclick="window.dbEngine.setLanguage('am')">አማ</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="login-wrapper">
+        <div class="section-panel login-card">
+            <div class="text-center mb-4">
+                <div style="margin-bottom: 1.5rem;">
+                    <img src="a.png" alt="League Logo"
+                        style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); box-shadow: 0 0 20px var(--primary-glow);">
+                </div>
+                <h1 data-i18n="login_title"
+                    style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 800;">Admin
+                    <span>Login</span>
+                </h1>
+            </div>
+
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="password" data-i18n="label_password">Administrator Password</label>
+                    <input type="password" id="password" class="form-control" data-i18n-placeholder="label_password"
+                        required autofocus>
+                </div>
+
+                <div id="login-error"
+                    style="color: var(--danger); font-size: 0.85rem; margin-top: -10px; margin-bottom: 15px; display: none;"
+                    data-i18n="auth_error">
+                    Invalid password. Access denied.
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full mt-2" data-i18n="btn_login">Login Access</button>
+            </form>
+
+            <div class="text-center mt-4">
+                <a href="index.html" class="nav-btn" data-i18n="nav_user_portal">User Portal</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        function handleLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('password').value;
+            const error = document.getElementById('login-error');
+
+            if (window.dbEngine.login(pass)) {
+                window.location.href = 'admin.html';
+            } else {
+                error.style.display = 'block';
+                document.getElementById('password').value = '';
+            }
+        }
+
+        // Check if already authenticated
+        if (window.dbEngine.isAuthenticated()) {
+            window.location.href = 'admin.html';
+        }
+    </script>
+</body>
+
+</html>
