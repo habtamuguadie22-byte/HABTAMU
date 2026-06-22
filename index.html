@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League Central - Football Fan Portal</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">⚽ <span>LeagueManager</span> Pro</a>
+            <nav class="nav-links">
+                <div
+                    style="display: flex; gap: 8px; margin-right: 15px; border-right: 1px solid var(--border); padding-right: 15px;">
+                    <button class="nav-btn" onclick="toggleTheme()" data-i18n="btn_theme_toggle">🌓 Theme</button>
+                    <button class="nav-btn lang-toggle" data-lang="en"
+                        onclick="window.dbEngine.setLanguage('en')">EN</button>
+                    <button class="nav-btn lang-toggle" data-lang="am"
+                        onclick="window.dbEngine.setLanguage('am')">አማ</button>
+                </div>
+                <a href="index.html" class="nav-btn active" data-i18n="nav_user_portal">User Portal</a>
+                <a href="admin.html" class="nav-btn admin-link" data-i18n="nav_admin_dashboard">Admin Dashboard</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <div class="dashboard-hero">
+            <div class="hero-content">
+                <h1 data-i18n="hero_title_user">Welcome to <span>League Central</span></h1>
+                <p data-i18n="hero_desc_user">Track real-time standings, browse active club catalogs, explore star
+                    roster statistics, and watch
+                    simulated match actions live.</p>
+
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
+                    <button class="btn btn-primary" onclick="openScheduleModal()" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem;">
+                        <span>📅</span> <span data-i18n="btn_view_schedule">View Full Schedule</span>
+                    </button>
+                </div>
+
+                <div class="global-category-tabs" id="global-cat-selector">
+                    <button class="g-cat-btn active" onclick="setGlobalCategory('all')" data-i18n="all">All</button>
+                    <button class="g-cat-btn" onclick="setGlobalCategory('senior')"
+                        data-i18n="cat_senior">Seniors</button>
+                    <button class="g-cat-btn" onclick="setGlobalCategory('u15')" data-i18n="cat_u15">U15</button>
+                    <button class="g-cat-btn" onclick="setGlobalCategory('u13')" data-i18n="cat_u13">U13</button>
+                    <button class="g-cat-btn" onclick="setGlobalCategory('u10')" data-i18n="cat_u10">U10</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Split Grid Layout -->
+        <div class="layout-split">
+            <!-- Left Side: Table & Matches -->
+            <div>
+                <!-- League Standings Card -->
+                <div class="section-panel">
+                    <div class="panel-header">
+                        <h2 data-i18n="standings_title">League Table Standings</h2>
+                        <button class="btn btn-secondary btn-sm" onclick="exportStandingsCSV()">CSV</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="league-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">Pos</th>
+                                    <th>Club</th>
+                                    <th>GP</th>
+                                    <th>W</th>
+                                    <th>D</th>
+                                    <th>L</th>
+                                    <th>GD</th>
+                                    <th class="highlight-col">PTS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-standings-list">
+                                <!-- Dynamically populated from JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Match Schedules and Fixtures -->
+                <div class="section-panel">
+                    <div class="panel-header">
+                        <h2 data-i18n="fixtures_title">Fixture Sheets & Results</h2>
+                        <button class="btn btn-secondary btn-sm" onclick="exportFixturesCSV()">CSV</button>
+                    </div>
+                    <div class="fixtures-list" id="user-matches-list">
+                        <!-- Dynamically populated from JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Live Game Tracker & Stats -->
+            <div>
+                <!-- Live Game Simulator Monitor -->
+                <div class="section-panel live-tracker-panel" id="live-monitor-container">
+                    <div class="panel-header" style="border-bottom: 1px solid rgba(0, 255, 127, 0.15);">
+                        <h2><span style="color:var(--primary); animation: blinker 1s linear infinite;">🔴</span> Live
+                            Match Center</h2>
+                    </div>
+
+                    <div id="tracker-idle-view" class="tracker-intro">
+                        <div style="font-size:3rem; margin-bottom:1rem;">📡</div>
+                        <h3 data-i18n="no_live_games">No Live Games Active</h3>
+                        <p class="mt-4" style="font-size:0.9rem;" data-i18n="no_live_desc">Simulations started in the
+                            Admin Dashboard will
+                            broadcast here in real-time. Head over to schedule a match!</p>
+                        <a href="admin.html" class="btn btn-secondary btn-sm mt-4" data-i18n="nav_admin_dashboard">Go to
+                            Admin Module</a>
+                    </div>
+
+                    <div id="tracker-active-view" class="simulator-board" style="display:none;">
+                        <div class="match-pitch-vis">
+                            <span
+                                style="position:absolute; top:10px; font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:750; letter-spacing:1px; z-index:10;">
+                                Live Match Simulator
+                            </span>
+                            <div class="pitch-scoreline">
+                                <span id="live-home-logo" style="font-size:2rem;">🔴</span>
+                                <span id="live-home-name">Home</span>
+                                <span id="live-scores"
+                                    style="font-family:var(--font-heading); color:var(--primary); font-weight:800; font-size:1.8rem; background:rgba(0,0,0,0.4); padding:0.25rem 1rem; border-radius:10px; border:1px solid rgba(0, 255, 127, 0.2);">0
+                                    - 0</span>
+                                <span id="live-away-name">Away</span>
+                                <span id="live-away-logo" style="font-size:2rem;">🔵</span>
+                            </div>
+                            <div class="pitch-timer" id="live-match-timer">0'</div>
+                        </div>
+
+                        <div class="panel-header"
+                            style="margin-top:0.5rem; margin-bottom:0.5rem; padding-bottom:0.25rem;">
+                            <h3 style="font-size:1rem; font-family:var(--font-heading);">Match Timeline Highlight Reels
+                            </h3>
+                        </div>
+
+                        <div class="events-ticker" id="live-events-log">
+                            <!-- Populated with events log -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Star Scorers / Details block -->
+                <div class="section-panel">
+                    <div class="panel-header">
+                        <h2 data-i18n="top_scorers_title">League Top Scorers</h2>
+                        <button class="btn btn-secondary btn-sm" onclick="exportTopScorersCSV()">CSV</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="league-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;">#</th>
+                                    <th>Player</th>
+                                    <th>Club</th>
+                                    <th style="text-align: right;">G</th>
+                                    <th style="text-align: right;" class="highlight-col">A</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-scorers-list">
+                                <!-- Top league goal scorers -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom: Full Team Catalog -->
+        <div class="section-panel" style="margin-top:2rem;">
+            <div class="panel-header">
+                <h2 data-i18n="browse_clubs_title">Browse Football Clubs</h2>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <div class="search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="club-search" class="form-control btn-sm" data-i18n-placeholder="label_search_clubs" oninput="renderTeamsCatalog()">
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="exportClubsCSV()">CSV</button>
+                </div>
+            </div>
+            <div class="cards-grid" id="user-teams-grid">
+                <!-- Dynamic cards with team info -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Box: Team Details & Squad Roster -->
+    <div class="modal-overlay" id="team-modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-team-title">Club Profile</h3>
+                <button class="modal-close" onclick="closeTeamModal()">&times;</button>
+            </div>
+
+            <div
+                style="background:var(--bg-surface-elevated); padding:1.25rem; border-radius:14px; border:1px solid var(--border); display:flex; gap:1.25rem; align-items:center; margin-bottom:1.5rem;">
+                <div id="modal-team-big-logo"
+                    style="font-size:3.5rem; width:80px; height:80px; display:flex; align-items:center; justify-content:center; background:var(--bg-dark); border:1px solid var(--border); border-radius:50%;">
+                    🛡️</div>
+                <div>
+                    <h4 id="modal-team-name"
+                        style="font-family:var(--font-heading); font-size:1.3rem; font-weight:800;">Club Name</h4>
+                    <p id="modal-team-stadium" style="color:var(--text-muted); font-size:0.9rem; margin-top:2px;">🏟️
+                        Stadium</p>
+                    <p id="modal-team-founded"
+                        style="color:var(--text-dark); font-size:0.8rem; margin-top:2px; font-weight:600;">Est. 1900</p>
+                </div>
+            </div>
+
+            <div class="panel-header" style="margin-bottom:0.75rem; padding-bottom:0.5rem;">
+                <h4 style="font-family:var(--font-heading); font-size:1.05rem;" data-i18n="squad_roster_title">Active
+                    Roster Squad</h4>
+            </div>
+
+            <div class="squad-roster-list" id="modal-squad-list">
+                <!-- Roster sheets loaded via JS -->
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Match Report Modal -->
+    <div class="modal-overlay report-modal" id="report-modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 data-i18n="label_match_report">Match Events Report</h3>
+                <button class="modal-close" onclick="closeReportModal()">&times;</button>
+            </div>
+            <div class="timeline-list" id="report-timeline-list">
+                <!-- Events log -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Table Modal -->
+    <div class="modal-overlay" id="schedule-modal-overlay">
+        <div class="modal-container" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3 id="schedule-modal-title">Tournament Schedule</h3>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <button class="btn btn-secondary btn-sm" onclick="exportFixturesCSV()">CSV</button>
+                    <button class="modal-close" onclick="closeScheduleModal()">&times;</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="league-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="label_date">Date</th>
+                            <th data-i18n="label_match">Matchup</th>
+                            <th data-i18n="label_status">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-modal-table-body">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Logic connection -->
+    <script src="app.js"></script>
+    <script>
+        // --- GLOBAL CATEGORY CONTROLLER ---
+        let currentGlobalCat = 'all';
+
+        function setGlobalCategory(cat) {
+            currentGlobalCat = cat;
+            document.querySelectorAll('#global-cat-selector .g-cat-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${cat}'`));
+            });
+            renderAll();
+        }
+
+        function renderAll() {
+            renderStandings();
+            renderFixtures();
+            renderTopScorers();
+            renderTeamsCatalog();
+        }
+
+        function renderStandings() {
+            const standings = window.dbEngine.getStandings(currentGlobalCat);
+            const container = document.getElementById('user-standings-list');
+
+            if (standings.length === 0) {
+                container.innerHTML = '<tr><td colspan="8" class="text-center font-bold pb-4 pt-4">No clubs in storage. Admin must add teams.</td></tr>';
+                return;
+            }
+
+            container.innerHTML = standings.map((item, index) => `
+                <tr>
+                    <td><span class="rank-badge">${index + 1}</span></td>
+                    <td>
+                        <div class="team-cell">
+                            <span class="team-logo-small">${item.logo}</span>
+                            <span style="font-weight:600;">${item.teamName}</span>
+                        </div>
+                    </td>
+                    <td>${item.played}</td>
+                    <td>${item.won}</td>
+                    <td>${item.drawn}</td>
+                    <td>${item.lost}</td>
+                    <td>${item.goalDifference >= 0 ? '+' + item.goalDifference : item.goalDifference}</td>
+                    <td class="highlight-col">${item.points}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderFixtures() {
+            const matches = window.dbEngine.getMatches(currentGlobalCat);
+            const container = document.getElementById('user-matches-list');
+
+            if (matches.length === 0) {
+                container.innerHTML = '<div class="empty-placeholder"><span>📅</span>No match fixtures configured.</div>';
+                return;
+            }
+
+            // Show latest finished matches first, scheduled next
+            const sortedMatches = [...matches].sort((a, b) => {
+                if (a.status === 'live') return -1;
+                if (b.status === 'live') return 1;
+                if (a.status === 'scheduled' && b.status === 'finished') return 1;
+                if (a.status === 'finished' && b.status === 'scheduled') return -1;
+                return new Date(b.date) - new Date(a.date);
+            });
+
+            container.innerHTML = sortedMatches.map(m => {
+                const home = window.dbEngine.getTeamById(m.homeTeamId);
+                const away = window.dbEngine.getTeamById(m.awayTeamId);
+
+                if (!home || !away) return '';
+
+                let badgeClass = 'status-scheduled';
+                let scoreText = 'vs';
+                let isLive = m.status === 'live';
+
+                if (m.status === 'finished') {
+                    badgeClass = 'status-finished';
+                    scoreText = `${m.homeScore} - ${m.awayScore}`;
+                } else if (isLive) {
+                    badgeClass = 'status-live';
+                    scoreText = `${m.homeScore} - ${m.awayScore}`;
+                }
+
+                let timelineBtn = m.status === 'finished' && m.events && m.events.length 
+                    ? `<div style="text-align:center; margin-top:8px;"><button class="btn btn-secondary btn-sm" style="font-size:0.7rem; padding:2px 8px;" onclick="openReportModal('${m.id}')" data-i18n="btn_view_timeline">View Timeline</button></div>` 
+                    : '';
+
+                return `
+                    <div class="match-card">
+                        <div class="match-meta">
+                            <span>📅 ${m.date}</span>
+                            <span class="match-status-badge ${badgeClass}">
+                                ${isLive ? '🔴 LIVE ' + m.minute + "'" : m.status}
+                            </span>
+                        </div>
+                        <div class="match-board" style="grid-template-columns: 1.2fr auto 1.2fr;">
+                            <div class="team-display home">
+                                <span class="team-name-inline" style="font-size:0.95rem;">${home.name}</span>
+                                <span class="team-logo-small" style="width:28px; height:28px;">${home.logo}</span>
+                            </div>
+                            <div>
+                                <div class="score-display-box ${isLive ? 'live' : ''}" style="font-size:1.15rem; padding:0.4rem 0.8rem; min-width:70px;">${scoreText}</div>
+                                ${timelineBtn}
+                            </div>
+                            <div class="team-display away">
+                                <span class="team-logo-small" style="width:28px; height:28px;">${away.logo}</span>
+                                <span class="team-name-inline" style="font-size:0.95rem;">${away.name}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTopScorers() {
+            const players = window.dbEngine.getTopScorers(currentGlobalCat, 5);
+            const container = document.getElementById('top-scorers-list');
+
+            // Sort by goals in descending order, take top 5
+            const sortedPlayers = [...players]
+                .filter(p => p.goals > 0)
+                .sort((a, b) => b.goals - a.goals || b.assists - a.assists)
+                .slice(0, 5);
+
+            if (sortedPlayers.length === 0) {
+                container.innerHTML = '<tr><td colspan="4" class="text-center font-bold pb-4 pt-4">No goals recorded yet.</td></tr>';
+                return;
+            }
+
+            container.innerHTML = sortedPlayers.map((p, index) => {
+                const team = window.dbEngine.getTeamById(p.teamId);
+                return `
+                    <tr>
+                        <td><span class="rank-badge">${index + 1}</span></td>
+                        <td style="font-weight:600;">${p.name} <span style="font-size:0.75rem; color:var(--text-dark); display:block; margin-top:2px;">${p.position}</span></td>
+                        <td>${team ? team.logo + ' ' + team.name : 'Unknown'}</td>
+                        <td style="text-align: right;">${p.goals}</td>
+                        <td style="text-align: right;" class="highlight-col">${p.assists}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderTeamsCatalog() {
+            let teams = window.dbEngine.getTeams();
+            const searchQuery = document.getElementById('club-search').value.toLowerCase().trim();
+
+            if (currentGlobalCat !== 'all') {
+                teams = teams.filter(t => t.category === currentGlobalCat);
+            }
+
+            if (searchQuery) {
+                teams = teams.filter(t => t.name.toLowerCase().includes(searchQuery));
+            }
+
+            const container = document.getElementById('user-teams-grid');
+
+            if (teams.length === 0) {
+                container.innerHTML = '<div class="empty-placeholder" style="grid-column:1/-1;"><span>🛡️</span>No clubs registered yet.</div>';
+                return;
+            }
+
+            container.innerHTML = teams.map(t => {
+                const squad = window.dbEngine.getPlayersByTeam(t.id);
+                return `
+                    <div class="catalog-card" onclick="openTeamModal('${t.id}')">
+                        <div class="catalog-logo">${t.logo}</div>
+                        <div class="catalog-name">${t.name}</div>
+                        <div class="catalog-meta">🏟️ ${t.stadium}</div>
+                        
+                        <div class="catalog-stats-row">
+                            <div class="cat-stat-item">
+                                <h5>Squad Size</h5>
+                                <p>${squad.length}</p>
+                            </div>
+                            <div class="cat-stat-item">
+                                <h5>Founded</h5>
+                                <p>${t.founded}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- TEAM MODAL & squad catalog ---
+        function openTeamModal(id) {
+            const t = window.dbEngine.getTeamById(id);
+            if (!t) return;
+
+            document.getElementById('modal-team-name').textContent = t.name;
+            document.getElementById('modal-team-stadium').textContent = `🏟️ Home Stadium: ${t.stadium}`;
+            document.getElementById('modal-team-founded').textContent = `Year Founded: ${t.founded}`;
+            document.getElementById('modal-team-big-logo').textContent = t.logo;
+
+            // Squad list loading
+            const squad = window.dbEngine.getPlayersByTeam(t.id);
+            const listContainer = document.getElementById('modal-squad-list');
+
+            if (squad.length === 0) {
+                listContainer.innerHTML = '<div class="empty-placeholder"><span>🏃‍♂️</span>No players registered on this roster yet.</div>';
+            } else {
+                listContainer.innerHTML = squad.map(p => {
+                    const photo = p.photoUrl ? `<img src="${p.photoUrl}" class="player-avatar">` : `<div class="player-avatar-placeholder">${p.name.charAt(0)}</div>`;
+                    const statusLabel = window.dbEngine.getTranslation('status_' + (p.status || 'active'));
+                    const statusClass = 'status-' + (p.status || 'active');
+
+                    return `
+                        <div class="squad-jersey">
+                            <div class="squad-player-left">
+                                ${photo}
+                                <div>
+                                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                                        <span class="jersey-num">${p.number}</span>
+                                        <span class="player-name">${p.name}</span>
+                                        <span class="status-badge ${statusClass}" style="transform: scale(0.85);">${statusLabel}</span>
+                                    </div>
+                                    <span class="player-pos-badge player-role-${p.position}">${p.position}</span>
+                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
+                                        ${p.age ? 'Age: ' + p.age : ''} ${p.nationality ? ' | ' + p.nationality : ''}
+                                    </div>
+                                    <div style="font-size:0.75rem; display:flex; gap:8px; margin-top:4px;">
+                                        <span>🟨 ${p.yellowCards || 0}</span>
+                                        <span>🟥 ${p.redCards || 0}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="squad-player-right">
+                                <span>⚽ <strong>${p.goals}</strong> Goals</span>
+                                <span>🎯 <strong>${p.assists}</strong> Assists</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById('team-modal-overlay').classList.add('active');
+        }
+
+        function closeTeamModal() {
+            document.getElementById('team-modal-overlay').classList.remove('active');
+        }
+
+        // --- THEME & REPORT MODALS ---
+        function toggleTheme() {
+            const current = window.dbEngine.getTheme();
+            const next = current === 'dark' ? 'light' : 'dark';
+            window.dbEngine.setTheme(next);
+            applyTheme();
+        }
+
+        function applyTheme() {
+            const theme = window.dbEngine.getTheme();
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-mode');
+            } else {
+                document.documentElement.classList.remove('light-mode');
+            }
+        }
+
+        function openReportModal(matchId) {
+            const m = window.dbEngine.getMatchById(matchId);
+            if (!m || !m.events) return;
+
+            const list = document.getElementById('report-timeline-list');
+            list.innerHTML = m.events.length ? m.events.map(ev => `
+                <div class="timeline-item">
+                    <span class="timeline-time">${ev.time}'</span>
+                    <span>${ev.icon} ${ev.text}</span>
+                </div>
+            `).reverse().join('') : '<p class="text-center">No events logged for this match.</p>';
+
+            document.getElementById('report-modal-overlay').classList.add('active');
+        }
+
+        function closeReportModal() {
+            document.getElementById('report-modal-overlay').classList.remove('active');
+        }
+
+        function openScheduleModal() {
+            const matches = window.dbEngine.getMatches(currentGlobalCat);
+            const container = document.getElementById('schedule-modal-table-body');
+            
+            // Set modal title based on category
+            const catLabel = currentGlobalCat === 'all' ? 'Full Tournament' : currentGlobalCat.toUpperCase();
+            document.getElementById('schedule-modal-title').textContent = `${catLabel} Match Schedule`;
+
+            if (matches.length === 0) {
+                container.innerHTML = '<tr><td colspan="3" class="text-center font-bold pb-4 pt-4">No match fixtures scheduled yet.</td></tr>';
+            } else {
+                // Filter for upcoming/scheduled matches if preferred, or show all
+                const scheduled = matches.filter(m => m.status === 'scheduled');
+                
+                if (scheduled.length === 0) {
+                    container.innerHTML = '<tr><td colspan="3" class="text-center font-bold pb-4 pt-4">No upcoming matches in this category.</td></tr>';
+                } else {
+                    container.innerHTML = scheduled.map(m => {
+                        const home = window.dbEngine.getTeamById(m.homeTeamId);
+                        const away = window.dbEngine.getTeamById(m.awayTeamId);
+                        return `
+                            <tr>
+                                <td style="white-space:nowrap;">📅 ${m.date}</td>
+                                <td>
+                                    <div class="team-cell">
+                                        <span class="team-logo-small">${home.logo}</span>
+                                        <strong>${home.name}</strong> 
+                                        <span style="margin:0 0.5rem; color:var(--text-muted);">vs</span> 
+                                        <span class="team-logo-small">${away.logo}</span>
+                                        <strong>${away.name}</strong>
+                                    </div>
+                                    <div style="font-size:0.75rem; color:var(--text-dark); margin-top:4px; padding-left:2.5rem;">
+                                        🏟️ Stadium: ${home.stadium}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="match-status-badge status-scheduled">Scheduled</span>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+
+            document.getElementById('schedule-modal-overlay').classList.add('active');
+            window.dbEngine.applyTranslations(); // Refresh modal text if needed
+        }
+
+        function closeScheduleModal() {
+            document.getElementById('schedule-modal-overlay').classList.remove('active');
+        }
+
+        // --- REACTIVE SYNC CHECKER ---
+        // Sets up an active layout listener to localStorage, detecting simulations instantly if admin is triggered in background
+        let prevDBVersionString = "";
+
+        function checkDBUpdates() {
+            const stored = localStorage.getItem('football_db');
+            if (stored && stored !== prevDBVersionString) {
+                prevDBVersionString = stored;
+                window.dbEngine.init(); // Reload latest state
+                window.db = window.dbEngine.state;
+
+                // Redraw UI sections
+                renderAll();
+            }
+
+            // Sync Live Match simulator monitor
+            const liveMatch = window.dbEngine.getMatches().find(m => m.status === 'live');
+            const idle = document.getElementById('tracker-idle-view');
+            const active = document.getElementById('tracker-active-view');
+
+            if (liveMatch) {
+                idle.style.display = 'none';
+                active.style.display = 'flex';
+
+                const home = window.dbEngine.getTeamById(liveMatch.homeTeamId);
+                const away = window.dbEngine.getTeamById(liveMatch.awayTeamId);
+
+                document.getElementById('live-home-name').textContent = home.name;
+                document.getElementById('live-home-logo').textContent = home.logo;
+                document.getElementById('live-scores').textContent = `${liveMatch.homeScore} - ${liveMatch.awayScore}`;
+                document.getElementById('live-away-name').textContent = away.name;
+                document.getElementById('live-away-logo').textContent = away.logo;
+                document.getElementById('live-match-timer').textContent = liveMatch.minute + "'";
+
+                const eventTicker = document.getElementById('live-events-log');
+                eventTicker.innerHTML = liveMatch.events.map(ev =>
+                    `<div class="ticker-event">
+                        <span class="event-time">${ev.time}'</span>
+                        <span class="event-icon">${ev.icon}</span>
+                        <span class="event-text">${ev.text}</span>
+                     </div>`
+                ).reverse().join('');
+            } else {
+                idle.style.display = 'block';
+                active.style.display = 'none';
+            }
+        }
+
+        function exportStandingsCSV() {
+            const standings = window.dbEngine.getStandings(currentGlobalCat);
+            let csv = "Rank,Team,Played,Won,Drawn,Lost,GD,Points\n";
+            standings.forEach((s, idx) => {
+                csv += `${idx + 1},"${s.teamName}",${s.played},${s.won},${s.drawn},${s.lost},${s.goalDifference},${s.points}\n`;
+            });
+            downloadCSV(csv, `standings_${currentGlobalCat}.csv`);
+        }
+
+        function exportFixturesCSV() {
+            const matches = window.dbEngine.getMatches(currentGlobalCat);
+            let csv = "Date,Home Team,Score,Away Team,Status\n";
+            matches.forEach(m => {
+                const homeTeam = window.dbEngine.getTeamById(m.homeTeamId);
+                const awayTeam = window.dbEngine.getTeamById(m.awayTeamId);
+                const home = homeTeam ? homeTeam.name : 'Unknown';
+                const away = awayTeam ? awayTeam.name : 'Unknown';
+                const score = m.status === 'finished' ? `${m.homeScore}-${m.awayScore}` : 'VS';
+                csv += `"${m.date}","${home}","${score}","${away}","${m.status}"\n`;
+            });
+            downloadCSV(csv, `fixtures_${currentGlobalCat}.csv`);
+        }
+
+        function exportTopScorersCSV() {
+            const players = window.dbEngine.getTopScorers(currentGlobalCat, 50);
+            let csv = "Rank,Name,Team,Goals,Assists,Position\n";
+            players.forEach((p, idx) => {
+                const team = window.dbEngine.getTeamById(p.teamId);
+                const teamName = team ? team.name : 'Unknown';
+                csv += `${idx + 1},"${p.name}","${teamName}",${p.goals},${p.assists},"${p.position}"\n`;
+            });
+            downloadCSV(csv, `top_scorers_${currentGlobalCat}.csv`);
+        }
+
+        function exportClubsCSV() {
+            let teams = window.dbEngine.getTeams();
+            if (currentGlobalCat !== 'all') {
+                teams = teams.filter(t => t.category === currentGlobalCat);
+            }
+            let csv = "Team Name,Stadium,Founded,Category,Squad Size\n";
+            teams.forEach(t => {
+                const squad = window.dbEngine.getPlayersByTeam(t.id);
+                csv += `"${t.name}","${t.stadium}",${t.founded},"${t.category.toUpperCase()}",${squad.length}\n`;
+            });
+            downloadCSV(csv, `clubs_${currentGlobalCat}.csv`);
+        }
+
+        function downloadCSV(csvContent, fileName) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Run checker every 750ms for hyper-reactive tab syncing
+        window.addEventListener('DOMContentLoaded', () => {
+            applyTheme();
+            checkDBUpdates();
+            setInterval(checkDBUpdates, 750);
+        });
+    </script>
+</body>
+
+</html>
